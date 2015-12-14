@@ -1,5 +1,5 @@
 build:
-	time (packer build -parallel=false template.json)
+	time (packer build -parallel=false vmware_fusion=false template.json)
 
 prepare: clean build
 
