@@ -1,108 +1,110 @@
 {
-    "variables": {
-        "url": "https://github.com/boot2docker/boot2docker/releases/download/v1.8.3/boot2docker.iso",
-        "checksum": "7d9e0b4a4cb6a4075ffcff66e5f646bf4115c393b45df82264a3771f1566df27",
-        "version": "1.8.3",
-        "number": "{{env `ATLAS_BUILD_NUMBER`}}"
-    },
+  "variables": {
+    "url": "https://github.com/boot2docker/boot2docker/releases/download/v1.9.1/boot2docker.iso",
+    "checksum": "d1ac84f01f9e3bc9eaf68a38afdbe2accd11b1d6c678d107018b545552cba199",
+    "version": "1.9.1",
+    "number": "{{env `ATLAS_BUILD_NUMBER`}}"
+  },
 
-    "builders": [{
-        "type": "virtualbox-iso",
-        "iso_url": "{{user `url`}}",
-        "iso_checksum_type": "sha256",
-        "iso_checksum": "{{user `checksum`}}",
-        "boot_wait": "5s",
-        "guest_additions_mode": "attach",
-        "guest_os_type": "Linux_64",
-        "ssh_username": "docker",
-        "ssh_password": "tcuser",
-        "shutdown_command": "sudo poweroff"
-    }, {
-        "type": "vmware-iso",
-        "iso_url": "{{user `url`}}",
-        "iso_checksum_type": "sha256",
-        "iso_checksum": "{{user `checksum`}}",
-        "boot_wait": "5s",
-        "guest_os_type": "other3xlinux-64",
-        "ssh_username": "docker",
-        "ssh_password": "tcuser",
-        "shutdown_command": "sudo poweroff",
-        "tools_upload_flavor" : "linux"
-    }, {
-        "type": "parallels-iso",
-        "iso_url": "{{user `url`}}",
-        "iso_checksum_type": "sha256",
-        "iso_checksum": "{{user `checksum`}}",
-        "boot_wait": "5s",
-        "guest_os_type": "linux",
-        "hard_drive_interface": "ide",
-        "parallels_tools_flavor": "lin",
-        "ssh_username": "docker",
-        "ssh_password": "tcuser",
-        "shutdown_command": "sudo poweroff"
-    }],
+  "builders": [{
+    "type": "virtualbox-iso",
+    "iso_url": "{{user `url`}}",
+    "iso_checksum_type": "sha256",
+    "iso_checksum": "{{user `checksum`}}",
+    "boot_wait": "5s",
+    "guest_additions_mode": "attach",
+    "guest_os_type": "Linux_64",
+    "ssh_username": "docker",
+    "ssh_password": "tcuser",
+    "shutdown_command": "sudo poweroff"
+  }, {
+    "type": "vmware-iso",
+    "iso_url": "{{user `url`}}",
+    "iso_checksum_type": "sha256",
+    "iso_checksum": "{{user `checksum`}}",
+    "boot_wait": "5s",
+    "guest_os_type": "other3xlinux-64",
+    "ssh_username": "docker",
+    "ssh_password": "tcuser",
+    "shutdown_command": "sudo poweroff",
+    "tools_upload_flavor": "linux"
+  }, {
+    "type": "parallels-iso",
+    "iso_url": "{{user `url`}}",
+    "iso_checksum_type": "sha256",
+    "iso_checksum": "{{user `checksum`}}",
+    "boot_wait": "5s",
+    "guest_os_type": "linux",
+    "hard_drive_interface": "ide",
+    "parallels_tools_flavor": "lin",
+    "ssh_username": "docker",
+    "ssh_password": "tcuser",
+    "shutdown_command": "sudo poweroff"
+  }],
 
-    "provisioners": [{
-       "type": "shell-local",
-       "command": "chmod +x ./download.sh && ./download.sh '{{user `url`}}' {{user `checksum`}}"
+  "provisioners": [{
+    "type": "shell-local",
+    "command": "chmod +x ./download.sh && ./download.sh '{{user `url`}}' {{user `checksum`}}"
+  }, {
+    "type": "shell",
+    "except": ["vmware-iso"],
+    "inline": [
+      "mkfs.ext4 -F -L boot2docker-data /dev/sda",
+      "sudo mkdir /mnt/sda",
+      "sudo mount /dev/sda /mnt/sda",
+      "sudo mkdir -p /mnt/sda/var/lib/boot2docker",
+      "sudo echo 'export DOCKER_TLS=no' > /tmp/profile",
+      "sudo mv /tmp/profile /mnt/sda/var/lib/boot2docker/profile",
+      "sudo chown root:root /mnt/sda/var/lib/boot2docker/profile",
+      "sync"
+    ]
+  }, {
+    "type": "shell",
+    "only": ["vmware-iso"],
+    "inline": [
+      "sudo mkdir -p /mnt/sda1/var/lib/boot2docker",
+      "sudo echo 'export DOCKER_TLS=no' > /tmp/profile",
+      "sudo mv /tmp/profile /mnt/sda1/var/lib/boot2docker/profile",
+      "sudo chown root:root /mnt/sda1/var/lib/boot2docker/profile",
+      "sync"
+    ]
+  }],
+
+  "post-processors": [
+    [{
+      "type": "vagrant",
+      "include": ["boot2docker.iso"],
+      "vagrantfile_template": "vagrantfile.tpl",
+      "output": "boot2docker_{{.Provider}}.box"
     }, {
-      "type": "shell",
-      "except": ["vmware-iso"],
-      "inline": [
-          "mkfs.ext4 -F -L boot2docker-data /dev/sda",
-          "sudo mkdir /mnt/sda",
-          "sudo mount /dev/sda /mnt/sda",
-          "sudo mkdir -p /mnt/sda/var/lib/boot2docker",
-          "sudo echo 'export DOCKER_TLS=no' > /tmp/profile",
-          "sudo mv /tmp/profile /mnt/sda/var/lib/boot2docker/profile",
-          "sudo chown root:root /mnt/sda/var/lib/boot2docker/profile",
-          "sync"
-      ]
-    }, {
-      "type": "shell",
+      "type": "atlas",
       "only": ["vmware-iso"],
-      "inline": [
-          "sudo mkdir -p /mnt/sda1/var/lib/boot2docker",
-          "sudo echo 'export DOCKER_TLS=no' > /tmp/profile",
-          "sudo mv /tmp/profile /mnt/sda1/var/lib/boot2docker/profile",
-          "sudo chown root:root /mnt/sda1/var/lib/boot2docker/profile",
-          "sync"
-      ]
-    }],
-
-    "post-processors": [[ {
-        "type": "vagrant",
-        "include": ["boot2docker.iso"],
-        "vagrantfile_template": "vagrantfile.tpl",
-        "output": "boot2docker_{{.Provider}}.box"
+      "artifact": "bhaskarvk/boot2docker",
+      "artifact_type": "vagrant.box",
+      "metadata": {
+        "provider": "vmware_desktop",
+        "version": "{{user `version`}}",
+        "build_number": "{{user `number`}}",
+        "created_at": "{{isotime}}",
+        "description": "boot2docker v{{user `version`}}."
+      }
     }, {
-        "type": "atlas",
-        "only": ["vmware-iso"],
-        "artifact": "bhaskarvk/boot2docker",
-        "artifact_type": "vagrant.box",
-        "metadata": {
-            "provider": "vmware_desktop",
-            "version": "{{user `version`}}",
-            "build_number": "{{user `number`}}",
-            "created_at" : "{{isotime}}",
-            "description": "boot2docker v{{user `version`}}."
-        }
-    }, {
-        "type": "atlas",
-        "only": ["virtualbox-iso"],
-        "artifact": "bhaskarvk/boot2docker",
-        "artifact_type": "vagrant.box",
-        "metadata": {
-            "provider": "virtualbox",
-            "version": "{{user `version`}}",
-            "build_number": "{{user `number`}}",
-            "created_at" : "{{isotime}}",
-            "description": "boot2docker v{{user `version`}}."
-        }
-    } ]],
+      "type": "atlas",
+      "only": ["virtualbox-iso"],
+      "artifact": "bhaskarvk/boot2docker",
+      "artifact_type": "vagrant.box",
+      "metadata": {
+        "provider": "virtualbox",
+        "version": "{{user `version`}}",
+        "build_number": "{{user `number`}}",
+        "created_at": "{{isotime}}",
+        "description": "boot2docker v{{user `version`}}."
+      }
+    }]
+  ],
 
-    "push": {
-        "name": "bhaskarvk/boot2docker",
-        "vcs": true
-    }
+  "push": {
+    "name": "bhaskarvk/boot2docker",
+    "vcs": true
+  }
 }
