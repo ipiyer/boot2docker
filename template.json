@@ -79,7 +79,7 @@
     }, {
       "type": "atlas",
       "only": ["vmware-iso"],
-      "artifact": "bhaskarvk/boot2docker",
+      "artifact": "munichlinux/boot2docker",
       "artifact_type": "vagrant.box",
       "metadata": {
         "provider": "vmware_desktop",
@@ -91,7 +91,7 @@
     }, {
       "type": "atlas",
       "only": ["virtualbox-iso"],
-      "artifact": "bhaskarvk/boot2docker",
+      "artifact": "munichlinux/boot2docker",
       "artifact_type": "vagrant.box",
       "metadata": {
         "provider": "virtualbox",
@@ -104,7 +104,7 @@
   ],
 
   "push": {
-    "name": "bhaskarvk/boot2docker",
+    "name": "munichlinux/boot2docker",
     "vcs": true
   }
 }
